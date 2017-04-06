@@ -2,7 +2,7 @@ import os
 import numpy
 import json
 import sys
-import gzip 
+import gzip
 
 class Provider:
 
@@ -19,7 +19,7 @@ class Provider:
     self.txt['train'] = [ line.split() for line in open("{}/data/{}/vendrov/data/coco/train.txt".format(self.root, self.dataset)) ]
     self.txt['val'] = [ line.split() for line in open("{}/data/{}/vendrov/data/coco/val.txt".format(self.root, self.dataset)) ]
     self.txt['test'] = [ line.split() for line in open("{}/data/{}/vendrov/data/coco/test.txt".format(self.root, self.dataset)) ]
-  
+
     audio_path = "{}/data/{}/dataset.{}.npy".format(self.root, self.dataset, self.audio_kind)
     ipa_path   = "{}/data/{}/dataset.ipa.jsonl.gz".format(self.root, self.dataset)
     words = json.load(open("{}/data/{}/dataset.words.json".format(self.root, self.dataset)))
@@ -29,13 +29,14 @@ class Provider:
     try:
         self.IPA = [ json.loads(line)['phonemes'] for line in gzip.open(ipa_path) ]
     except IOError as e:
-        sys.stderr.write("Could not read file {}: IPA transcription not available\n".format(audio_path))
+        sys.stderr.write("Warning: could not read file {}: IPA transcription not available\n".format(ipa_path))
+        self.IPA = None
 
     try:
-      
+
         self.AUDIO = numpy.load(audio_path)
     except IOError as e:
-        sys.stderr.write("Could not read file {}: audio features not available\n".format(audio_path))
+        sys.stderr.write("Warning: could not read file {}: audio features not available\n".format(audio_path))
 
 
   def iterImages(self, split='train', shuffle=False):
@@ -56,7 +57,7 @@ class Provider:
             sent['audio'] = None
         else:
             sent['audio'] = self.AUDIO[self.w2i[sent['raw']]]
-        if len(self.IPA)>0:
+        if self.IPA is not None:
             sent['ipa'] = self.IPA[self.w2i[sent['raw']]]
         img['sentences'].append(sent)
       yield img
@@ -66,8 +67,6 @@ class Provider:
       for sent in img['sentences']:
         yield sent
 
-        
+
 def getDataProvider(*args, **kwargs):
 	return Provider(*args, **kwargs)
-      
-    

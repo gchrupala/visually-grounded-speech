@@ -9,7 +9,7 @@ from scipy.spatial.distance import cdist
 def paraphrase_ranking(vectors, group):
     """Rank sentences by projection and return evaluation metrics."""
     return ranking(vectors, vectors, group, ns=[4], exclude_self=True)
-    
+
 def ranking(candidates, vectors, correct, ns=[1,5,10], exclude_self=False):
     """Rank `candidates` in order of similarity for each vector and return evaluation metrics.
 
@@ -46,7 +46,7 @@ class Cdist():
         self.V = T.matrix('V')
         self.U_norm = self.U / self.U.norm(2, axis=1).reshape((self.U.shape[0], 1))
         self.V_norm = self.V / self.V.norm(2, axis=1).reshape((self.V.shape[0], 1))
-    
+
         self.W = T.dot(self.U_norm, self.V_norm.T)
         self.cosine = theano.function([self.U, self.V], self.W)
 
@@ -56,35 +56,5 @@ class Cdist():
         else:
             chunks  = numpy.split(A, [i for i
                                       in range(self.batch_size, A.shape[0], self.batch_size) ])
-        cosines = numpy.vstack([self.cosine(chunk, B) for chunk in chunks])                    
-        return 1 - cosines 
-
-import json
-import imaginet.defn.visual as visual
-from imaginet.simple_data import phonemes
-from scipy.spatial.distance import cosine
-
-
-def eval_bestimg(modelpath, testpath, tokenize=phonemes):
-    rows = [ json.loads(line) for line in open(testpath)]
-    model = visual.load(path=modelpath)
-    scaler = model.scaler
-    batcher = model.batcher
-    mapper = batcher.mapper
-    img_fs = {}
-    sent_ids = {}
-    prov = dp.getDataProvider('coco', root='/home/gchrupala/repos/reimaginet')
-    for split in ['val','test','restval']:
-        for img in prov.iterImages(split=split):
-            img_fs[img['cocoid']] = scaler.transform([ img['feat'] ])[0]
-            for sent in img['sentences']:
-                sent_ids[sent['sentid']]=sent
-    def response(row):
-        sent = sent_ids[row['meta']['id']]
-        inputs = list(mapper.transform([tokenize(sent) ]))
-        pred = model.Visual.predict(batcher.batch_inp(inputs))[0]
-        return 1+numpy.argmin([ cosine(pred, img_fs[cocoid]) for cocoid in row['meta']['candidates']])
-    preds = numpy.array([ response(row) for row in rows ])
-    target = numpy.array([ row['meta']['response'] for row in rows])
-    return numpy.mean(preds==target)
-    
+        cosines = numpy.vstack([self.cosine(chunk, B) for chunk in chunks])
+        return 1 - cosines

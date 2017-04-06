@@ -5,7 +5,7 @@ import imaginet.defn.audiovis_rhn as D
 dataset = 'coco'
 batch_size = 32
 epochs=15
-prov = dp.getDataProvider(dataset, root='/home/gchrupala/repos/reimaginet/', audio_kind='mfcc')
+prov = dp.getDataProvider(dataset, root='../..', audio_kind='mfcc')
 data = sd.SimpleData(prov, min_df=10, scale=False,
                      batch_size=batch_size, shuffle=True)
 model_config = dict(size=512, depth=5, recur_depth=2, max_norm=2.0, residual=True,
@@ -24,5 +24,5 @@ def audio(sent):
 eval_config = dict(tokenize=audio, split='val', task=D.Visual, batch_size=batch_size,
                    epochs=epochs, encode_sentences=D.encode_sentences)
 
-E.run_train(data, prov, model_config, run_config, eval_config, resume=True)
-#E.run_eval(prov, eval_config, encode_sentences=D.encode_sentences)
+E.run_train(data, prov, model_config, run_config, eval_config, resume=False)
+

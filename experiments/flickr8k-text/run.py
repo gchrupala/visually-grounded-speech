@@ -5,7 +5,7 @@ import imaginet.defn.visual2_rhn as D
 dataset = 'flickr8k'
 batch_size = 32
 epochs=20
-prov = dp.getDataProvider(dataset, root='/home/gchrupala/repos/reimaginet/', audio_kind=None)
+prov = dp.getDataProvider(dataset, root='../..', audio_kind=None)
 data = sd.SimpleData(prov, min_df=1, scale=False,
                      batch_size=batch_size, shuffle=True, tokenize=sd.words, val_vocab=True)
 model_config = dict(size_embed=300, size=1024, depth=1, recur_depth=1, max_norm=2.0, residual=True,
@@ -24,4 +24,4 @@ eval_config = dict(tokenize=sd.words, split='val', task=D.Visual, batch_size=bat
                    epochs=epochs, encode_sentences=D.encode_sentences)
 
 E.run_train(data, prov, model_config, run_config, eval_config)
-#E.run_eval(prov, eval_config, encode_sentences=D.encode_sentences)
+

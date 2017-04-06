@@ -1,2 +1,4 @@
 # visually-grounded-speech
-Code for the paper Representations of language in a model of visually grounded speech signal https://arxiv.org/abs/1702.01991
+
+This repository contains code to reproduce the results from: 
+- Chrupała, G., Gelderloos, L., & Alishahi, A. (2017). Representations of language in a model of visually grounded speech signal. ACL. arXiv preprint: https://arxiv.org/abs/1702.01991

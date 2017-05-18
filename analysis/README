@@ -1,0 +1,9 @@
+
+Section 4.3 (Utterance Length): utterance-length.py 
+
+Section 4.4 (Predict word presence): predict-word-presence.py
+
+Other: synthesize-words.py 
+       generates synthesized version of all words in a dataset.
+       
+

@@ -3,7 +3,13 @@ Section 4.3 (Utterance Length): utterance-length.py
 
 Section 4.4 (Predict word presence): predict-word-presence.py
 
+Section 4.5 (Sentence similarity): sentence-similarity.py
+                                   bootstrap-and-plot-correlations.R
+
 Other: synthesize-words.py 
        generates synthesized version of all words in a dataset.
+       
+       synthesize-sentences.py
+       generates synthesized version of sentences in a pickled list of sentences as strings
        
 

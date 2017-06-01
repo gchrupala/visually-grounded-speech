@@ -25,7 +25,7 @@ python utterance-length.py
 python predict-word-presence.py
 ```
 
-## Section 4.5 (Sentence similarity):
+## Section 4.5 Sentence similarity
 
 - synthesize-words.py
        generates synthesized version of all words in a dataset.

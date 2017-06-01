@@ -14,7 +14,7 @@ import numpy
 
 class BasicDataProvider:
   def __init__(self, dataset, root='.', extra_train=False, audio_kind='fbank'):
-    
+
     self.root = root
     # !assumptions on folder structure
     self.dataset_root = os.path.join(self.root, 'data', dataset)
@@ -37,8 +37,8 @@ class BasicDataProvider:
         for sentence in image['sentences']:
           sentence['ipa'] = IPA[sentence['sentid']]
     except IOError:
-      sys.stderr.write("Could not read file {}: IPA transcription not available\n".format(ipa_path))
-    
+      sys.stderr.write("Warning: could not read file {}: IPA transcription not available\n".format(ipa_path))
+
     try:
         AUDIO = numpy.load(audio_path)
         sentid = 0
@@ -47,11 +47,12 @@ class BasicDataProvider:
                 sentence['audio'] = AUDIO[sentid]
                 sentid += 1
     except IOError:
-        sys.stderr.write("Could not read file {}: audio features not available\n".format(audio_path))
-        
+        sys.stderr.write("Warning: could not read file {}: audio features not available\n".format(audio_path))
+
+
     # load the image features into memory
     features_path = os.path.join(self.dataset_root, 'vgg_feats.mat')
-    
+
     features_struct = scipy.io.loadmat(features_path)
     self.features = features_struct['feats']
 
@@ -63,8 +64,8 @@ class BasicDataProvider:
       self.split[img['split']].append(img)
 
   # "PRIVATE" FUNCTIONS
-  # in future we may want to create copies here so that we don't touch the 
-  # data provider class data, but for now lets do the simple thing and 
+  # in future we may want to create copies here so that we don't touch the
+  # data provider class data, but for now lets do the simple thing and
   # just return raw internal img sent structs. This also has the advantage
   # that the driver could store various useful caching stuff in these structs
   # and they will be returned in the future with the cache present
@@ -87,7 +88,7 @@ class BasicDataProvider:
 
   def getSplitSize(self, split, ofwhat = 'sentences'):
     """ return size of a split, either number of sentences or number of images """
-    if ofwhat == 'sentences': 
+    if ofwhat == 'sentences':
       return sum(len(img['sentences']) for img in self.split[split])
     else: # assume images
       return len(self.split[split])
@@ -129,7 +130,7 @@ class BasicDataProvider:
       yield batch
 
   def iterSentences(self, split = 'train'):
-    for img in self.split[split]: 
+    for img in self.split[split]:
       for sent in img['sentences']:
         yield self._getSentence(sent)
 
@@ -184,5 +185,3 @@ class CombinedDataProvider(object):
     iters = [ p.iterImages(split=split, max_images=max_images) for p in self.providers ]
     for item in itertools.chain(*iters):
       yield item
-    
-  

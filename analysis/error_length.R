@@ -1,0 +1,5 @@
+library(dplyr)
+library(ggplot2)
+data.L <- read.csv(header=TRUE, file="error-length.txt")
+ggplot(data.L, aes(x=better, y=Length)) + geom_boxplot(notch = TRUE, size=1) + coord_flip() + theme(aspect.ratio=1/1.6, text=element_text(size=35))
+ggsave("better-length.pdf", units = "cm", width=15*1.6, height=15)

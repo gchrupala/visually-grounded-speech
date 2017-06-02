@@ -1,14 +1,19 @@
 from __future__ import division
+from __future__ import print_function
 import imaginet.simple_data as sd
 import imaginet.data_provider as dp
 import imaginet.vendrov_provider as vendrov
 import imaginet.experiment as E
 import imaginet.defn.audiovis_rhn as Speech
 import imaginet.defn.visual2_rhn as Text
+import imaginet.task
 import numpy
 import sys
 import argparse
 import logging
+from sklearn.linear_model import LogisticRegression
+from sklearn.cross_validation import StratifiedKFold
+from sklearn.preprocessing import normalize
 
 def main():
     logging.getLogger().setLevel('INFO')
@@ -18,16 +23,18 @@ def main():
     retrievalp.set_defaults(func=retrieval)
     errorsp = commands.add_parser('errors')
     errorsp.set_defaults(func=errors)
+    homonymsp = commands.add_parser('homonyms')
+    homonymsp.set_defaults(func=homonyms)
     args = parser.parse_args()
     args.func(args)
 
 def retrieval(args):
 
-    print "model r@1 r@5 r@10 rank"
-    print "flick8k-speech {:.3f} {:.3f} {:.3f} {}".format(*scores(flickr8k_speech()))
-    print "flickr8k-text {:.3f} {:.3f} {:.3f} {}".format(*scores(flickr8k_text()))
-    print "coco-speech {:.3f} {:.3f} {:.3f} {}".format(*scores(coco_speech()))
-    print "coco-text {:.3f} {:.3f} {:.3f} {}".format(*scores(coco_text()))
+    print("model r@1 r@5 r@10 rank")
+    print("flick8k-speech {:.3f} {:.3f} {:.3f} {}".format(*scores(flickr8k_speech())))
+    print("flickr8k-text {:.3f} {:.3f} {:.3f} {}".format(*scores(flickr8k_text())))
+    print("coco-speech {:.3f} {:.3f} {:.3f} {}".format(*scores(coco_speech())))
+    print("coco-text {:.3f} {:.3f} {:.3f} {}".format(*scores(coco_text())))
 
 def errors(args):
     import pandas as pd
@@ -54,6 +61,89 @@ def errors(args):
     logging.info("Writing results to error-length.txt")
     with open("error-length.txt","w") as f:
         f.write(data.to_csv(index=False))
+
+def homonyms(args):
+
+    logging.info("Loading data")
+    homonym = [ line.split() for line in open("../data/coco/homonym.txt")]
+    prov = vendrov.getDataProvider(dataset='coco', root='..', audio_kind='mfcc')
+    sent = list(prov.iterSentences(split='train')) + list(prov.iterSentences(split='val'))
+    logging.info("Loading model")
+    model = imaginet.task.load("../models/coco-speech.zip")
+    def input_mfcc(sent):
+        return [ sent_i['audio'].mean(axis=0) for sent_i in sent ]
+    def embed(sent):
+        return Speech.encode_sentences(model, [ sent_i['audio'] for sent_i in sent ])
+    logging.info("Testing on I/O layers")
+    with open("ambigu-io.txt", "w") as out:
+        print("word1 word2 io count1 count2 majority acc", file=out)
+        for H in homonym:
+            logging.info("Testing homonym {}".format(H))
+            r = test_homonym(H, sent, input_mfcc)
+            for acc in r['kfold_acc']:
+                print(" ".join(H), "input", r['word1_count'], r['word2_count'], r['majority'], acc, file=out)
+            r = test_homonym(H, sent, embed)
+            for acc in r['kfold_acc']:
+                print(" ".join(H), "output", r['word1_count'], r['word2_count'], r['majority'], acc, file=out)
+            out.flush()
+    logging.info("Written results to ambigu-io.txt")
+    logging.info("Testing on recurrent layers")
+    with open("ambigu-layerwise.txt", "w") as out:
+        print("word1 word2 layer count1 count2 majority acc", file=out)
+        for H in homonym:
+            logging.info("Testing homonym {}".format(H))
+            for layer in range(5):
+                feat = lambda x: mean_layer(x, model, layer=layer)
+                r = test_homonym(H, sent, feat)
+                for acc in r['kfold_acc']:
+                    print(" ".join(H), layer, r['word1_count'], r['word2_count'], r['majority'], acc, file=out)
+                    out.flush()
+    logging.info("Written results to ambigu-layerwise.txt")
+
+def matching(sent, word):
+    for sent_i in sent:
+        if word in sent_i['tokens']:
+            yield sent_i
+
+def test_homonym(H, sent, features, C=1.0):
+    X_0 = features(matching(sent, H[0]))
+    X_1 = features(matching(sent, H[1]))
+    y_0 = numpy.zeros(len(X_0))
+    y_1 = numpy.ones(len(X_1))
+    X = normalize(numpy.vstack([X_0, X_1]), norm='l2')
+    y = numpy.hstack([y_0, y_1])
+    classifier = LogisticRegression(C=C)
+    fold = StratifiedKFold(y, n_folds=10)
+    score = []
+    count = []
+    for tr, te in fold:
+        X_tr, X_te = X[tr], X[te]
+        y_tr, y_te = y[tr], y[te]
+        classifier.fit(X_tr, y_tr)
+        score.append(sum(classifier.predict(X_te) == y_te))
+        count.append(len(y_te))
+    score = numpy.array(score, dtype='float')
+    count = numpy.array(count, dtype='float')
+    result = {'word1_count': len(y_0),
+              'word2_count': len(y_1),
+              'majority': 1.0 * max(len(y_0),len(y_1))/len(y),
+              'kfold_acc': score/count }
+    return result
+
+CACHE = {}
+def mean_layer(sent, model, layer=0):
+    sent = list(sent)
+    if len(CACHE) > 5:
+        CACHE.clear()
+    key = '\n'.join([ sent_i['raw'] for sent_i in sent ])
+    if key in CACHE:
+        return [ datum[:,layer,:].mean(axis=0) for datum in CACHE[key] ]
+    else:
+        data = Speech.layer_states(model, [ sent_i['audio'] for sent_i in sent ])
+        CACHE[key] = data
+        result = [ datum[:,layer,:].mean(axis=0) for datum in data ]
+        return result
+
 
 def flickr8k_speech(split='test'):
     batch_size = 32

@@ -8,10 +8,15 @@ where each result appears and show how to reproduce these results.
 ### Table 1 and Table 2
 
 ```
-python2 retrieval.py > retrieval.txt
+python2 analyze.py retrieval > retrieval.txt
 ```
 
 ### Figure 2
+
+```
+python2 analyze.py errors
+```
+The data will be written to `error-length.txt`
 
 ## Section 4.3 Predicting utterance length
 

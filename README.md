@@ -20,7 +20,7 @@ After unpacking these files you should have the directories `data` and `models`.
 
 ### Training models
 
-In order to re-train one of the models, change to the corresponding directory in `experiments`, and execute:
+In order to re-train one of the models, change to the corresponding directory in [experiments](experiments), and execute:
 
 ```
 python2.7 run.py > log.txt

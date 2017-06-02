@@ -1,11 +1,11 @@
 # Evaluation and analysis
 
-The sections tables and figures below correspond to the place in the paper
+The sections, tables and figures below correspond to the place in the paper
 where each result appears and show how to reproduce these results.
 
 ## Section 4.3 Image retrieval
 
-### Table 1 and Table 2
+### Table 1 and 2
 
 ```
 python2.7 analyze.py retrieval > retrieval.txt

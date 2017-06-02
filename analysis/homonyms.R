@@ -32,7 +32,7 @@ conv <- function(x){ sapply(x, function(io) {
   })
 }
 
-data.full <- rbind_list(data.io %>% mutate(layer = conv(io)), data)
+data.full <- bind_rows(data.io %>% mutate(layer = conv(io)), data)
 
 data.prep <- data.full %>% 
   filter(words != "played/plaid") %>%
@@ -48,7 +48,7 @@ ggplot(data.prep %>% filter(layer < 5 & layer > -1),
   geom_line(data=data.prep %>% filter(layer >= 0 & layer <= 4) %>% group_by(layer) %>% summarize(rer=mean(rer), mincount=mean(mincount)), size=2, color="black") +
   geom_line(data=data.prep %>% filter(layer >= 4 ) %>% group_by(layer) %>% summarize(rer=mean(rer), mincount=mean(mincount)), linetype="dotted", size=2, color="black") +
   xlab("layer") + ylab("RER") + 
-  theme(text=element_text(size=22), aspect.ratio=1, legend.position="bottom")
+  theme(text=element_text(size=22), aspect.ratio=1, legend.position="bottom", legend.direction="vertical")
 ggsave(filename = "ambigu-layerwise.pdf", width=12, height=10)
 
 

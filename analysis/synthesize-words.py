@@ -1,16 +1,15 @@
 import numpy
 import imaginet.tts as tts
-import imaginet.data_provider as dp
+import imaginet.vendrov_provider as dp
 
-savedir = "/home/aalishah/reimaginet/data/analysis/"
 dataset = 'coco'
-#dataset = 'flickr8k'
+savedir = "../data/%s/"%dataset
 
 
 if dataset == 'flickr8k':
-    prov = dp.getDataProvider('flickr8k', root='/home/gchrupala/reimaginet/', audio_kind='human.max1K.accel3.ord.mfcc')
+    prov = dp.getDataProvider('flickr8k', root='..', audio_kind='human.max1K.accel3.ord.mfcc')
 else:
-    prov = dp.getDataProvider('coco', root='/home/gchrupala/reimaginet/', audio_kind='mfcc')
+    prov = dp.getDataProvider(dataset='coco', root='..', audio_kind='mfcc')
 validate = list(prov.iterSentences(split='val'))
 
 

@@ -11,7 +11,6 @@ import random
 import imaginet.vendrov_provider as vdp
 import imaginet.data_provider as dp
 
-removeStopWords = False
 item_count = -1
 if len(sys.argv) > 1:
     item_count = int(sys.argv[1])
@@ -32,28 +31,18 @@ def applyNeuralNetwork(train_x, train_y, test_x, test_y, label):
     
     model.compile(loss='binary_crossentropy', optimizer=optimizer)
     
+    max_acc = 0
     for j in range(10):
         model.fit(train_x, train_y, nb_epoch=(j+1)*10, batch_size=64, verbose=0)
         trainprd = (numpy.ndarray.flatten(model.predict(train_x, verbose=0))>=0.5).astype('float32')
         prd = (numpy.ndarray.flatten(model.predict(test_x, verbose=0))>=0.5).astype('float32')
-    
-        print
-        print(label + " epoch " + str((j+1)*10))
-        print("\tAccuracy on training set: %0.3f" % numpy.mean(trainprd==train_y))
-        print("\tAccuracy on test set: %0.3f" % numpy.mean(prd==test_y))
-        print
-        sys.stdout.flush()
-    
-    
+        max_acc = max(max_acc, numpy.mean(prd==test_y))
+    return max_acc
 
-    pset = set()
-    nset = set()
-    return(pset,nset)
-        
 
-def readStopWords():
+def readStopWords(savedir):
     stop_words = set()
-    inf = open("stopwords", 'r')
+    inf = open(savedir + "stopwords", 'r')
     sw = inf.readline()
     while (sw != ""):
         stop_words.add(sw.strip().lower())
@@ -71,8 +60,7 @@ def stimuli(features):
                     
 
 
-#for dataset in ['flickr8k','coco']:
-for dataset in ['coco']:
+for dataset in ['flickr8k','coco']:
     savedir = "../data/%s/"%dataset
 
     print "load the model and the validation dataset..."
@@ -106,14 +94,13 @@ for dataset in ['coco']:
     print "generate positive and negative examples..."
     numpy.random.seed(0)
     random.seed(0)
-    stopwords = readStopWords()
+    stopwords = readStopWords(savedir)
 
     positive = []
     for i in range(len(validate)):
         positem = random.choice(validate[i]['tokens'])
-        if (removeStopWords):
-            while (positem.lower() in stopwords):
-                positem = random.choice(validate[i]['tokens'])
+        while (positem.lower() in stopwords):
+            positem = random.choice(validate[i]['tokens'])
         positive += [positem]
 
     negative = []
@@ -144,43 +131,53 @@ for dataset in ['coco']:
     embeddings_neg = audiovis.encode_sentences(model, [ numpy.asarray(x, dtype='float32') for x in mfcc_neg ])
     
 
-    pwrong = {}
-    nwrong = {}
+    acc = {'coco':[], 'flickr8k':[]}
 
     #Predict the presence of a word in a sentence using a neural network
     y = numpy.array([1,0] * len(validate), dtype='float32')
 
-    label = "\nSentence embeddings"
-    x = stimuli(val_embeddings)
-    (pwrong['embeddings'], nwrong['embeddings']) = applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:], label)
-    print
-
-
-    label = "\nAverage input vectors"
+    #Average input vectors
     x = stimuli([numpy.average(item['audio'],axis=0) for item in validate])
-    (pwrong['input'], nwrong['input']) = applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:], label)
-    print
+    acc[dataset].append(applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:]))
 
     layers = val_states[0].shape[1]
-    
-    label = "\nAverage activation units"
+    #Average activation units
     for l in range(layers):
         x = stimuli([item[:,l,:].mean(axis=0) for item in val_states])
-        (pwrong['avg'+str(l)], nwrong['avg'+str(l)]) = applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:], label+"\ton layer %d"%l)
-    print
-    print
+        acc[dataset].append(applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:]))
 
-    label = "\nAverage normalized activation units"
-    for l in range(layers):
-        x = stimuli([item[:,l,:].mean(axis=0) for item in val_states])
-        (pwrong['l2avg'+str(l)], nwrong['l2avg'+str(l)]) = applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:], label+"\ton layer %d"%l)
-    print
-    print
+    #Sentence embeddings
+    x = stimuli(val_embeddings)
+    acc[dataset].append(applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:]))
 
-    label ="\nActivation units at the last time step"
-    for l in range(layers):
-        x = stimuli([item[-1][l] for item in val_states])
-        (pwrong['last'+str(l)], nwrong['last'+str(l)]) = applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:], label+"\ton layer %d"%l)
-    print
-    print
+    #Average normalized activation units
+    #for l in range(layers):
+    #    x = stimuli([item[:,l,:].mean(axis=0) for item in val_states])
+    #    acc['l2avg'+str(l)] = applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:])
+    #Activation units at the last time step
+    #for l in range(layers):
+    #    x = stimuli([item[-1][l] for item in val_states])
+    #    acc['last'+str(l)] = applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:])
+
         
+import matplotlib.pyplot as plt
+
+xaxis = [0, 1, 2, 3, 4, 5]
+
+plt.axis([-1,6,45,90])
+plt.text(3.5, 57, 'embeddings',color='red')
+plt.text(4.5, 73, 'embeddings', color='blue')
+plt.xlabel("Network layers")
+plt.ylabel("Accuracy")
+
+plt.plot(xaxis[0:2],acc['coco'][0:2],'b--')
+coco, = plt.plot(xaxis[1:6],acc['coco'][1:6],'b-', label="COCO")
+plt.plot([5], [75], 'bo')
+
+plt.plot(xaxis[0:2],acc['flickr8k'][0:2],'r--')
+flickr, = plt.plot(xaxis[1:5],acc['flickr8k'][1:5],'r-', label="Flickr8k")
+plt.plot([4], [59], 'ro')
+
+plt.legend(handles=[acc['coco'],acc['flickr8k']])
+
+plt.savefig('predword.png')

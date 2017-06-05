@@ -5,7 +5,7 @@ import imaginet.data_provider as dp
 import sklearn.linear_model as lm
 import sys
 
-
+remove_stopwords = False
 item_count = -1
 if len(sys.argv) > 1:
     item_count = int(sys.argv[1])
@@ -36,8 +36,6 @@ def removeStopWords(words):
 
 
 
-for dataset in ['coco', 'flickr8k']:
-    savedir = "../data/%s/"%dataset
 for dataset in ['flickr8k','coco']:
     savedir = "../data/%s/"%dataset
 

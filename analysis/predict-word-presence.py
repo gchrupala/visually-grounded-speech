@@ -17,7 +17,7 @@ if len(sys.argv) > 1:
 
 
 
-def applyNeuralNetwork(train_x, train_y, test_x, test_y, label):
+def applyNeuralNetwork(train_x, train_y, test_x, test_y):
     #print "input shape", train_x.shape
 
     model = Sequential()
@@ -61,6 +61,7 @@ def stimuli(features):
 
 
 for dataset in ['flickr8k','coco']:
+    print ">>>>>>>> DATASET: ", dataset
     savedir = "../data/%s/"%dataset
 
     print "load the model and the validation dataset..."
@@ -160,6 +161,7 @@ for dataset in ['flickr8k','coco']:
     #    acc['last'+str(l)] = applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:])
 
         
+
 import matplotlib.pyplot as plt
 
 xaxis = [0, 1, 2, 3, 4, 5]

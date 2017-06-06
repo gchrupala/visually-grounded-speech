@@ -23,17 +23,24 @@ Rscript error_length.R
 ```
 The plot will be written to `better-length.pdf`.
 
-## Section 4.3 Predicting utterance length
+
+### Figure 4
 
 ```
-python utterance-length.py
+python2.7 utterance-length.py
 ```
-## Section 4.4 Predicting word presence
+The plot will be written to `sentlength.pdf`.
 
 
+
+### Figure 5
+
 ```
-python predict-word-presence.py
+python2.7 extract-features.py
+python2.7 predict-word-presence.py
 ```
+The plot will be written to `predword.pdf`.
+
 
 ## Section 4.5 Sentence similarity
 

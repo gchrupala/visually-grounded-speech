@@ -61,6 +61,18 @@ def stimuli(features):
     return numpy.array(x, dtype='float32')
                     
 
+def minall(scores):
+    mmin = 1.0
+    for x in scores:
+        mmin = min(mmin, min(scores[x]))
+    return mmin
+
+def maxall(scores):
+    mmax = 0.0
+    for x in scores:
+        mmax = max(mmax, max(scores[x]))
+    return mmax
+
 acc = {}
 for dataset in ['flickr8k','coco']:
     print ">>>>>>>> DATASET: ", dataset
@@ -162,26 +174,29 @@ for dataset in ['flickr8k','coco']:
     #    x = stimuli([item[-1][l] for item in val_states])
     #    acc['last'+str(l)] = applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:])
 
-print(acc)
-print
-    
 
-xaxis = [0, 1, 2, 3, 4, 5]
 
-plt.axis([-1,6,45,90])
-plt.text(3.5, 57, 'embeddings',color='red')
-plt.text(4.5, 73, 'embeddings', color='blue')
+
+clen = len(acc['coco'])
+flen = len(acc['flickr8k'])
+
+xaxis = [i for i in range(clen)]
+
+plt.axis([-1,clen,minall(acc)-0.05, maxall(acc)+0.05])
+plt.text(clen-1.5, acc['coco'][-1]-0.05, 'embeddings',color='blue')
+plt.text(flen-1.5, acc['flickr8k'][-1]-0.05, 'embeddings', color='red')
 plt.xlabel("Network layers")
 plt.ylabel("Accuracy")
 
 plt.plot(xaxis[0:2],acc['coco'][0:2],'b--')
-coco, = plt.plot(xaxis[1:6],acc['coco'][1:6],'b-', label="COCO")
-plt.plot([5], [75], 'bo')
+coco, = plt.plot(xaxis[1:clen-1],acc['coco'][1:clen-1],'b-', label="COCO")
+plt.plot(xaxis[clen-2:],acc['coco'][clen-2:],'b--')
+plt.plot([clen-1], acc['coco'][-1], 'bo')
 
 plt.plot(xaxis[0:2],acc['flickr8k'][0:2],'r--')
-flickr, = plt.plot(xaxis[1:5],acc['flickr8k'][1:5],'r-', label="Flickr8k")
-plt.plot([4], [59], 'ro')
+flickr, = plt.plot(xaxis[1:flen-1],acc['flickr8k'][1:flen-1],'r-', label="Flickr8k")
+plt.plot(xaxis[flen-2:flen],acc['flickr8k'][flen-2:],'r--')
+plt.plot([flen-1], acc['flickr8k'][-1], 'ro')
 
-plt.legend(handles=[acc['coco'],acc['flickr8k']])
-
-plt.savefig('predword.png')
+plt.legend([coco,flickr], ["COCO","Flickr8k"], loc=4)
+plt.savefig('predword.pdf')

@@ -12,12 +12,17 @@ if len(sys.argv) > 1:
     
 
 
-def applyLinearRegression(train_x, train_y, test_x, test_y, label):
+def applyLinearRegression(train_x, train_y, test_x, test_y):
+    x = numpy.asarray(train_x).reshape((len(train_x),1))
+    y = numpy.asarray(train_y).reshape((len(train_y),1))
+    #tx = numpy.asarray(test_x)
+    #ty = numpy.asarray(test_y).reshape((test_y.shape,1))
     rgr = lm.LinearRegression()
-    rgr.fit(train_x, train_y)
-    print(label)
-    print("\tMean absolute error on test set: %.6f" % numpy.mean(abs(rgr.predict(test_x)-test_y))) 
-    print("\tVariation score: %.6f" % rgr.score(test_x, test_y))
+    rgr.fit(numpy.asarray(train_x),y)
+    return rgr.score(test_x, test_y)
+    #print(label)
+    #print("\tMean absolute error on test set: %.6f" % numpy.mean(abs(rgr.predict(test_x)-test_y))) 
+    #print("\tVariation score: %.6f" % rgr.score(test_x, test_y))
 
 def readStopWords():
     stop_words = set()
@@ -35,7 +40,8 @@ def removeStopWords(words):
     return [i.lower() for i in words if i.lower() not in stop_words]
 
 
-
+rsquare = {}
+baseline = {}
 for dataset in ['flickr8k','coco']:
     savedir = "../data/%s/"%dataset
 
@@ -68,37 +74,47 @@ for dataset in ['flickr8k','coco']:
     else:
         y = [len(item['tokens']) for item in validate]
 
-    label = "\nWords based on time steps"
+    rsquare[dataset] = []
+    
+    print("Words based on time steps")
     x = [[len(item['audio'])] for item in validate]
-    applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:], label)
-    sys.stdout.flush()
+    rgr = applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:])
+    baseline[dataset] = rgr
 
-    label = "\nWords based on embeddings"
-    x = val_embeddings
-    applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:], label)
-    sys.stdout.flush()
-
-    label = "\nAverage input vectors"
+    print("Average input vectors")
     x = [numpy.average(item['audio'],axis=0) for item in validate]
-    applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:], label)
-    sys.stdout.flush()
+    rsquare[dataset].append(applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:]))
 
-    label = "\nAverage activation units"
-    for l in range(5):
-        x = [item[:,l,:].mean(axis=0) for item in val_states]
-        applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:], label+" on layer %d"%l)
-        sys.stdout.flush()
-
-    label = "\nNormalized average activation units"
+    print("Normalized average activation units")
     for l in range(5):
         x = [item[:,l,:].mean(axis=0) for item in val_states]
         xnorm = [v/numpy.linalg.norm(v) for v in x]
-        applyLinearRegression(xnorm[0:sp], y[0:sp], xnorm[sp:], y[sp:], label+" on layer %d"%l)
-        sys.stdout.flush()
+        rsquare[dataset].append(applyLinearRegression(xnorm[0:sp], y[0:sp], xnorm[sp:], y[sp:]))
 
-    label = "\nActivation units on the last time step"
-    for l in range(5):
-        x = [item[-1][l] for item in val_states]
-        applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:], label+" on layer %d"%l)
-        sys.stdout.flush()
+    print("Words based on embeddings")
+    x = val_embeddings
+    rsquare[dataset].append(applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:]))
 
+    
+import matplotlib.pyplot as plt
+
+xaxis = [0, 1, 2, 3, 4, 5]
+
+
+plt.axis([-1,6,45,90])
+plt.text(3.5, 57, 'embeddings',color='red')
+plt.text(4.5, 73, 'embeddings', color='blue')
+plt.xlabel("Network layers")
+plt.ylabel("Sentence length prediction (R2)")
+
+plt.plot(xaxis[0:2],rsquare['coco'][0:2],'b--')
+coco, = plt.plot(xaxis[1:6],rsquare['coco'][1:6],'b-', label="COCO")
+plt.plot([5], [75], 'bo')
+
+plt.plot(xaxis[0:2],rsquare['flickr8k'][0:2],'r--')
+flickr, = plt.plot(xaxis[1:5],rsquare['flickr8k'][1:5],'r-', label="Flickr8k")
+plt.plot([4], [59], 'ro')
+
+plt.legend(handles=[coco,flickr])
+
+plt.savefig('sentence_length.png')

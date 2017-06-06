@@ -105,7 +105,45 @@ for dataset in ['flickr8k','coco']:
 
 
 #----plotting
-    
+from matplotlib import pyplot as plt
+
+clen = len(rsquare['coco'])
+flen = len(rsquare['flickr8k'])
+
+xaxis = [i for i in range(clen)]
+
+plt.axis([-1,clen,minall(rsquare)-0.05, baseline['coco']+0.1])
+plt.text(clen-1.5, rsquare['coco'][-1]-0.05, 'embeddings',color='blue')
+plt.text(flen-1.5, rsquare['flickr8k'][-1]-0.05, 'embeddings', color='red')
+plt.xlabel("Network layers")
+plt.ylabel(r"Sentence length prediction ($R^2$)")
+
+plt.plot(range(-1,clen+1),[baseline['coco']]*(clen+2), 'b:')
+plt.plot(range(-1,clen+1),[baseline['flickr8k']]*(clen+2), 'r:')
+plt.text(clen-1.5, baseline['coco'], 'time steps',color='blue')
+plt.text(clen-1.5, baseline['flickr8k'], 'time steps', color='red')
+
+
+plt.plot(xaxis[0:2],rsquare['coco'][0:2],'b--')
+coco, = plt.plot(xaxis[1:clen-1],rsquare['coco'][1:clen-1],'b-', label="COCO")
+plt.plot(xaxis[clen-2:],rsquare['coco'][clen-2:],'b--')
+plt.plot([clen-1], rsquare['coco'][-1], 'bo')
+
+plt.plot(xaxis[0:2],rsquare['flickr8k'][0:2],'r--')
+flickr, = plt.plot(xaxis[1:flen-1],rsquare['flickr8k'][1:flen-1],'r-', label="Flickr8k")
+plt.plot(xaxis[flen-2:flen],rsquare['flickr8k'][flen-2:],'r--')
+plt.plot([flen-1], rsquare['flickr8k'][-1], 'ro')
+
+plt.legend([coco,flickr], ["COCO","Flickr8k"], loc=4)
+plt.savefig('sentlength.pdf')
+
+
+
+
+
+
+
+
 from matplotlib import pyplot as plt
 
 clen = len(acc['coco'])
@@ -117,7 +155,7 @@ plt.axis([-1,clen,minall(acc)-0.05, maxall(acc)+0.05])
 plt.text(clen-1.5, acc['coco'][-1]-0.05, 'embeddings',color='blue')
 plt.text(flen-1.5, acc['flickr8k'][-1]-0.05, 'embeddings', color='red')
 plt.xlabel("Network layers")
-plt.ylabel("Sentence length prediction (R2)")
+plt.ylabel(r"Sentence length prediction ($R^2$)")
 
 #plt.plot(xaxis,[baseline['coco']]*len(xaxis), 'b.')
 

@@ -3,7 +3,7 @@
 The sections, tables and figures below correspond to the place in the paper
 where each result appears and show how to reproduce these results.
 
-## Section 4.3 Image retrieval
+## Section 4.2 Image retrieval
 
 ### Table 1 and 2
 
@@ -24,6 +24,8 @@ Rscript error_length.R
 The plot will be written to `better-length.pdf`.
 
 
+## Section 4.3 Predicting utterance length
+
 ### Figure 4
 
 ```
@@ -32,6 +34,7 @@ python2.7 utterance-length.py
 The plot will be written to `sentlength.pdf`.
 
 
+## Section 4.4 Predicting word presence
 
 ### Figure 5
 

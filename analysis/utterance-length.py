@@ -2,6 +2,7 @@ import numpy
 import imaginet.task as task
 import imaginet.defn.audiovis_rhn as audiovis
 import imaginet.data_provider as dp
+import imaginet.vendrov_provider as vdp
 import sklearn.linear_model as lm
 import sys
 
@@ -13,16 +14,10 @@ if len(sys.argv) > 1:
 
 
 def applyLinearRegression(train_x, train_y, test_x, test_y):
-    x = numpy.asarray(train_x).reshape((len(train_x),1))
     y = numpy.asarray(train_y).reshape((len(train_y),1))
-    #tx = numpy.asarray(test_x)
-    #ty = numpy.asarray(test_y).reshape((test_y.shape,1))
     rgr = lm.LinearRegression()
     rgr.fit(numpy.asarray(train_x),y)
     return rgr.score(test_x, test_y)
-    #print(label)
-    #print("\tMean absolute error on test set: %.6f" % numpy.mean(abs(rgr.predict(test_x)-test_y))) 
-    #print("\tVariation score: %.6f" % rgr.score(test_x, test_y))
 
 def readStopWords():
     stop_words = set()
@@ -38,6 +33,19 @@ def removeStopWords(words):
     stop_words = readStopWords()
     stop_words.update(['.', ',', '"', "'", '?', '!', ':', ';', '(', ')', '[', ']', '{', '}'])
     return [i.lower() for i in words if i.lower() not in stop_words]
+
+def minall(scores):
+    mmin = 1.0
+    for x in scores:
+        mmin = min(mmin, min(scores[x]))
+    return mmin
+
+def maxall(scores):
+    mmax = 0.0
+    for x in scores:
+        mmax = max(mmax, max(scores[x]))
+    return mmax
+                                                
 
 
 rsquare = {}
@@ -65,56 +73,63 @@ for dataset in ['flickr8k','coco']:
         val_states = val_states[:min(item_count,len(val_states))]
 
     #split data into training and test
-    sp = 2*len(val_embeddings)*4/5
+    sp = len(val_embeddings)*4/5
     print "Train: 1-%d; Test: %d-%d\n"%(sp,sp+1,2*len(val_embeddings))
 
     print "build dataset..."
     if remove_stopwords:
-        y = [len(removeStopWords(item['tokens'])) for item in validate]
+        y = [[len(removeStopWords(item['tokens']))] for item in validate]
     else:
-        y = [len(item['tokens']) for item in validate]
-
-    rsquare[dataset] = []
-    
+        y = [[len(item['tokens'])] for item in validate]
+                    
     print("Words based on time steps")
     x = [[len(item['audio'])] for item in validate]
-    rgr = applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:])
-    baseline[dataset] = rgr
-
+    baseline[dataset] = applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:])
+    
+    rsquare[dataset] = []
+    
     print("Average input vectors")
     x = [numpy.average(item['audio'],axis=0) for item in validate]
     rsquare[dataset].append(applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:]))
-
+    
     print("Normalized average activation units")
-    for l in range(5):
+    layers = val_states[0].shape[1]
+    for l in range(layers):
         x = [item[:,l,:].mean(axis=0) for item in val_states]
         xnorm = [v/numpy.linalg.norm(v) for v in x]
         rsquare[dataset].append(applyLinearRegression(xnorm[0:sp], y[0:sp], xnorm[sp:], y[sp:]))
-
+        
     print("Words based on embeddings")
     x = val_embeddings
     rsquare[dataset].append(applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:]))
 
+
+#----plotting
     
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 
-xaxis = [0, 1, 2, 3, 4, 5]
+clen = len(acc['coco'])
+flen = len(acc['flickr8k'])
 
+xaxis = [i for i in range(clen)]
 
-plt.axis([-1,6,45,90])
-plt.text(3.5, 57, 'embeddings',color='red')
-plt.text(4.5, 73, 'embeddings', color='blue')
+plt.axis([-1,clen,minall(acc)-0.05, maxall(acc)+0.05])
+plt.text(clen-1.5, acc['coco'][-1]-0.05, 'embeddings',color='blue')
+plt.text(flen-1.5, acc['flickr8k'][-1]-0.05, 'embeddings', color='red')
 plt.xlabel("Network layers")
 plt.ylabel("Sentence length prediction (R2)")
 
-plt.plot(xaxis[0:2],rsquare['coco'][0:2],'b--')
-coco, = plt.plot(xaxis[1:6],rsquare['coco'][1:6],'b-', label="COCO")
-plt.plot([5], [75], 'bo')
+#plt.plot(xaxis,[baseline['coco']]*len(xaxis), 'b.')
 
-plt.plot(xaxis[0:2],rsquare['flickr8k'][0:2],'r--')
-flickr, = plt.plot(xaxis[1:5],rsquare['flickr8k'][1:5],'r-', label="Flickr8k")
-plt.plot([4], [59], 'ro')
+plt.plot(xaxis[0:2],acc['coco'][0:2],'b--')
+coco, = plt.plot(xaxis[1:clen-1],acc['coco'][1:clen-1],'b-', label="COCO")
+plt.plot(xaxis[clen-2:],acc['coco'][clen-2:],'b--')
+plt.plot([clen-1], acc['coco'][-1], 'bo')
 
-plt.legend(handles=[coco,flickr])
+plt.plot(xaxis[0:2],acc['flickr8k'][0:2],'r--')
+flickr, = plt.plot(xaxis[1:flen-1],acc['flickr8k'][1:flen-1],'r-', label="Flickr8k")
+plt.plot(xaxis[flen-2:flen],acc['flickr8k'][flen-2:],'r--')
+plt.plot([flen-1], acc['flickr8k'][-1], 'ro')
 
-plt.savefig('sentence_length.png')
+plt.legend([coco,flickr], ["COCO","Flickr8k"], loc=4)
+plt.savefig('sentlength.pdf')

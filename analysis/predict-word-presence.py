@@ -11,6 +11,8 @@ import random
 import imaginet.vendrov_provider as vdp
 import imaginet.data_provider as dp
 
+import matplotlib.pyplot as plt
+
 item_count = -1
 if len(sys.argv) > 1:
     item_count = int(sys.argv[1])
@@ -59,7 +61,7 @@ def stimuli(features):
     return numpy.array(x, dtype='float32')
                     
 
-
+acc = {}
 for dataset in ['flickr8k','coco']:
     print ">>>>>>>> DATASET: ", dataset
     savedir = "../data/%s/"%dataset
@@ -132,7 +134,7 @@ for dataset in ['flickr8k','coco']:
     embeddings_neg = audiovis.encode_sentences(model, [ numpy.asarray(x, dtype='float32') for x in mfcc_neg ])
     
 
-    acc = {'coco':[], 'flickr8k':[]}
+    acc[dataset] = []
 
     #Predict the presence of a word in a sentence using a neural network
     y = numpy.array([1,0] * len(validate), dtype='float32')
@@ -160,9 +162,9 @@ for dataset in ['flickr8k','coco']:
     #    x = stimuli([item[-1][l] for item in val_states])
     #    acc['last'+str(l)] = applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:])
 
-        
-
-import matplotlib.pyplot as plt
+print(acc)
+print
+    
 
 xaxis = [0, 1, 2, 3, 4, 5]
 

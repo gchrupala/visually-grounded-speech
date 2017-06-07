@@ -28,6 +28,7 @@ The plot will be written to `better-length.pdf`.
 
 ### Figure 4
 
+In order to generate the figure:
 ```
 python2.7 utterance-length.py
 ```
@@ -38,6 +39,7 @@ The plot will be written to `sentlength.pdf`.
 
 ### Figure 5
 
+In order to generate the figure:
 ```
 python2.7 predict-word-presence.py
 ```

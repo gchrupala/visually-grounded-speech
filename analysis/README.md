@@ -41,7 +41,7 @@ The plot will be written to `sentlength.pdf`.
 
 In order to generate the figure:
 ```
-KERAS_BACKEND=theano python2.7 predict-word-presence.py
+python2.7 predict-word-presence.py
 ```
 The plot will be written to `predword.pdf`.
 
@@ -66,13 +66,16 @@ In order to create the figure, run:
 python2.7 sentence-similarity.py
 Rscript bootstrap-and-plot-correlations.R
 ```
-Figure will be save in `xxx.pdf`
+Correlation data will be stored in 'z_score_coco_sick.csv'. 
+Figure will be saved as `xxx.pdf`
 
-Pre-extracted feature files for this experiment are included in `data.tgz`. If you need to re-generate them, run:
+Pre-extracted feature files for this experiment are included in `data.tgz`. If you need to re-generate them, first synthesize and store speech by running:
 
 ```
-python2.7 zzz.py
+python2.7 synthesize-sentences.py sentences_a
+python2.7 synthesize-sentences.py sentences_b
 ```
+and comment line 165 and uncomment 167 in sentence-similarity.py to extract the features.
 
 ## Section 4.6 Homonym disambiguation
 

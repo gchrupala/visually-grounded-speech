@@ -58,7 +58,6 @@ simdata$edit_similarity <- dist_to_sim(simdata$norm_edit_distance)
 coco_sick_plot_basic <- plot_coco(simdata, n)
 coco_sick_plot_2 <- coco_sick_plot_basic + geom_boxplot(lwd=1, position="identity") + coord_flip()
 coco_sick_plot <- coco_sick_plot_2 + theme(legend.position="none")
-#coco_plot <- grid.arrange(coco_sick_plot, coco_sts_plot, ncol=2)
 coco_sick_plot + scale_y_continuous(limits = c(0.42, 0.83)) + theme(legend.text = element_text(size=28), 
                                              legend.title=element_blank(), 
                                              axis.text = element_text(size=30), 
@@ -68,3 +67,4 @@ coco_sick_plot + scale_y_continuous(limits = c(0.42, 0.83)) + theme(legend.text 
                                              legend.direction = "vertical",
                     panel.grid.minor = element_line(colour="white", size=1.5),
                     panel.grid.major = element_line(colour="white", size=1.5))
+ggsave("sentence_similarity.png")

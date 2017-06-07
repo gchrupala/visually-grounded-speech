@@ -36,10 +36,23 @@ The plot will be written to `sentlength.pdf`.
 
 ## Section 4.4 Predicting word presence
 
-### Figure 5
+In order to synthesize audio and extract features for this experiment, run:
 
 ```
 python2.7 extract-features.py
+```
+The features will be written to:
+- `../data/coco/words-coco.npy`
+- `../data/coco/mfcc-coco.npy`
+- `../data/flickr8k/words-flickr8k.npy`
+- `../data/flickr8k/mfcc-flickr8k.npy`
+```
+Pre-extracted feature files are also included in `data.tgz`. 
+
+
+### Figure 5
+
+```
 python2.7 predict-word-presence.py
 ```
 The plot will be written to `predword.pdf`.
@@ -47,10 +60,6 @@ The plot will be written to `predword.pdf`.
 
 ## Section 4.5 Sentence similarity
 
-
-In order to synthesize audio and extract data run:
-```
-python2.7 synthesize-sentences.py
 ```
 The data will be written to ``xxx`` ``zzz``. Pre-extracted feature files are also available in `data.tgz`.
 

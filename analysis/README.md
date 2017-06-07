@@ -66,7 +66,7 @@ In order to create the figure, run:
 python2.7 sentence-similarity.py
 Rscript bootstrap-and-plot-correlations.R
 ```
-Correlation data will be stored in 'z_score_coco_sick.csv'. 
+Sentence similarity data will be stored in `z_score_coco_sick.csv`. 
 Figure will be saved as `sentence_similarity.png`
 
 Pre-extracted feature files for this experiment are included in `data.tgz`. If you need to re-generate them, first synthesize and store speech by running:

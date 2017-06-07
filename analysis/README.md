@@ -47,16 +47,23 @@ The plot will be written to `predword.pdf`.
 
 ## Section 4.5 Sentence similarity
 
-- synthesize-words.py
-       generates synthesized version of all words in a dataset.
-- synthesize-sentences.py
-       generates synthesized version of sentences in a pickled list of sentences as strings
+
+In order to synthesize audio and extract data run:
+```
+python2.7 synthesize-sentences.py
+```
+The data will be written to ``xxx`` ``zzz``. Pre-extracted feature files are also available in `data.tgz`.
 
 ### Figure 6
+
+In order to create the figure, run:
+
 ```
-python sentence-similarity.py
+python2.7 sentence-similarity.py
 Rscript bootstrap-and-plot-correlations.R
 ```
+Figure will be save in `xxx.pdf`
+
 ## Section 4.6 Homonym disambiguation
 
 ### Figure 7

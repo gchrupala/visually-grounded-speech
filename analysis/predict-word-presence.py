@@ -10,7 +10,8 @@ import sys
 import random
 import imaginet.vendrov_provider as vdp
 import imaginet.data_provider as dp
-
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 item_count = -1
@@ -30,21 +31,27 @@ def applyNeuralNetwork(train_x, train_y, test_x, test_y):
 
     # Use ADAM optimizer, setting some extra options
     optimizer = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-8)
-    
+
     model.compile(loss='binary_crossentropy', optimizer=optimizer)
-    
+
     max_acc = 0
+    # for j in range(10):
+    #     model.fit(train_x, train_y, nb_epoch=(j+1)*10, batch_size=64, verbose=0)
+    #     trainprd = (numpy.ndarray.flatten(model.predict(train_x, verbose=0))>=0.5).astype('float32')
+    #     prd = (numpy.ndarray.flatten(model.predict(test_x, verbose=0))>=0.5).astype('float32')
+    #     max_acc = max(max_acc, numpy.mean(prd==test_y))
     for j in range(10):
-        model.fit(train_x, train_y, nb_epoch=(j+1)*10, batch_size=64, verbose=0)
-        trainprd = (numpy.ndarray.flatten(model.predict(train_x, verbose=0))>=0.5).astype('float32')
+        model.fit(train_x, train_y, nb_epoch=10, batch_size=64, verbose=0)
         prd = (numpy.ndarray.flatten(model.predict(test_x, verbose=0))>=0.5).astype('float32')
-        max_acc = max(max_acc, numpy.mean(prd==test_y))
+        acc = numpy.mean(prd==test_y)
+        max_acc = max(max_acc, acc)
+        print j*10, acc
     return max_acc
 
 
-def readStopWords(savedir):
+def readStopWords():
     stop_words = set()
-    inf = open(savedir + "stopwords", 'r')
+    inf = open("nltk-stopwords.txt", 'r')
     sw = inf.readline()
     while (sw != ""):
         stop_words.add(sw.strip().lower())
@@ -52,14 +59,14 @@ def readStopWords(savedir):
     inf.close()
     stop_words.update(['.', ',', '"', "'", '?', '!', ':', ';', '(', ')', '[', ']', '{', '}'])
     return stop_words
-                                            
+
 
 def stimuli(features):
     x = []
     for i in range(len(validate)):
         x += [numpy.concatenate((features[i],embeddings_pos[i]),axis=0), numpy.concatenate((features[i],embeddings_neg[i]),axis=0)]
     return numpy.array(x, dtype='float32')
-                    
+
 
 def minall(scores):
     mmin = 1.0
@@ -89,8 +96,8 @@ for dataset in ['flickr8k','coco']:
     validate = list(prov.iterSentences(split='val'))
     data = [ numpy.asarray(sent['audio'], dtype='float32') for sent in validate ]
     val_embeddings = audiovis.encode_sentences(model, data)
-    audiovis = reload(audiovis)
-    val_states = audiovis.layer_states(model, data)
+    val_states = [ datum.mean(axis=0) for datum in audiovis.iter_layer_states(model, data) ]
+    del data
 
     if item_count > -1:
         validate = validate[:min(item_count,len(validate))]
@@ -100,16 +107,16 @@ for dataset in ['flickr8k','coco']:
     #split data into training and test
     sp = 2*len(val_embeddings)*4/5
     print "Train: 1-%d; Test: %d-%d\n"%(sp,sp+1,2*len(val_embeddings))
-    
+
 
     ###predict the presence or absence of a word
-    
+
     # For each sentence, pick a random word as the postive example.
     # Pick a positive example of another sentence as the negative example of the current sentence.
     print "generate positive and negative examples..."
     numpy.random.seed(0)
     random.seed(0)
-    stopwords = readStopWords(savedir)
+    stopwords = readStopWords()
 
     positive = []
     for i in range(len(validate)):
@@ -144,7 +151,7 @@ for dataset in ['flickr8k','coco']:
 
     embeddings_pos = audiovis.encode_sentences(model, [ numpy.asarray(x, dtype='float32') for x in mfcc_pos ])
     embeddings_neg = audiovis.encode_sentences(model, [ numpy.asarray(x, dtype='float32') for x in mfcc_neg ])
-    
+
 
     acc[dataset] = []
 
@@ -155,10 +162,10 @@ for dataset in ['flickr8k','coco']:
     x = stimuli([numpy.average(item['audio'],axis=0) for item in validate])
     acc[dataset].append(applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:]))
 
-    layers = val_states[0].shape[1]
+    layers = val_states[0].shape[0]
     #Average activation units
     for l in range(layers):
-        x = stimuli([item[:,l,:].mean(axis=0) for item in val_states])
+        x = stimuli([item[l,:] for item in val_states])
         acc[dataset].append(applyNeuralNetwork(x[0:sp], y[0:sp], x[sp:], y[sp:]))
 
     #Sentence embeddings

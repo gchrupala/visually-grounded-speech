@@ -36,7 +36,14 @@ The plot will be written to `sentlength.pdf`.
 
 ## Section 4.4 Predicting word presence
 
-In order to synthesize audio and extract features for this experiment, run:
+### Figure 5
+
+```
+python2.7 predict-word-presence.py
+```
+The plot will be written to `predword.pdf`.
+
+Pre-extracted feature files for this experiment are included in `data.tgz`. If you need to re-generate them, run:
 
 ```
 python2.7 extract-features.py
@@ -47,21 +54,11 @@ The features will be written to:
 - `../data/flickr8k/words-flickr8k.npy`
 - `../data/flickr8k/mfcc-flickr8k.npy`
 ```
-Pre-extracted feature files are also included in `data.tgz`. 
 
 
-### Figure 5
-
-```
-python2.7 predict-word-presence.py
-```
-The plot will be written to `predword.pdf`.
 
 
 ## Section 4.5 Sentence similarity
-
-```
-The data will be written to ``xxx`` ``zzz``. Pre-extracted feature files are also available in `data.tgz`.
 
 ### Figure 6
 
@@ -72,6 +69,12 @@ python2.7 sentence-similarity.py
 Rscript bootstrap-and-plot-correlations.R
 ```
 Figure will be save in `xxx.pdf`
+
+Pre-extracted feature files for this experiment are included in `data.tgz`. If you need to re-generate them, run:
+
+```
+python2.7 zzz.py
+```
 
 ## Section 4.6 Homonym disambiguation
 

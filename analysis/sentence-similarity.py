@@ -42,9 +42,6 @@ def cosine_similarities(a, b, transform):
     returns list of cosine similarities between lists of vectors
     a and b. The z_score transformation is applied if transform == True
     """
-    # stack everything so that you have 2d numpy arrays io lists of 1d arrays
-    # preprocessing.scale returns a 2d array anyway, so by doing a stack first
-    # the data will be in the same format whether scaled or not.
     a = numpy.stack(a)
     b = numpy.stack(b)
     #transform if requested
@@ -63,6 +60,11 @@ def get_batch_mfccs(batch):
     with open("speech/sentences_b_{}.pkl".format(batch), "rb") as f:
         audio_b = pickle.load(f)
     mfcc_b = [ tts.extract_mfcc(audio) for audio in audio_b ]
+    return mfcc_a, mfcc_b
+
+def load_batch_mfccs(batch):
+    mfcc_a = numpy.load("../data/coco/sick/mfccs/a_{}.npy".format(batch))
+    mfcc_b = numpy.load("../data/coco/sick/mfccs/b_{}.npy".format(batch))
     return mfcc_a, mfcc_b
 
 # copied implementation from https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Levenshtein_distance#Python
@@ -101,11 +103,19 @@ def norm_levenshtein(item1, item2):
 
 ############################
 
+# uncomment if using command line arguments instead of hardcoded settings
 # command line options:
 # model, sentence dataset, z_score or raw
-whichmodel = sys.argv[1]
-dataset = sys.argv[2]
-toscale = sys.argv[3]
+#whichmodel = sys.argv[1]
+#dataset = sys.argv[2]
+#toscale = sys.argv[3]
+
+# hardcoded to replicate analysis reported in paper.
+# take out if using command line options instead.
+whichmodel = "coco"
+dataset = "sick"
+toscale = "z_score"
+
 if toscale == "z_score":
     transform = True
 elif toscale == "raw":
@@ -113,18 +123,17 @@ elif toscale == "raw":
 
 # load model
 if whichmodel == "coco":
-    model = task.load("run-rhn-coco-9-resume/model.r.e9.zip")
+    model = task.load("../models/coco-speech.zip")
 elif whichmodel == "flickr8k":
-    model = task.load("run-rhn-human-11/model.r.e24.zip")
+    model = task.load("../models/flickr8k-speech.zip")
 
-with open("{}/ratings.p".format(dataset), "rb") as f:
+with open("../data/coco/sick/ratings.p", "rb") as f:
     hr = pickle.load(f)
-with open("{}/sentences_a.p".format(dataset), "rb") as f:
+with open("../data/coco/sick/sentences_a.p", "rb") as f:
     sents_a = pickle.load(f)
-with open("{}/sentences_b.p".format(dataset), "rb") as f:
+with open("../data/coco/sick/sentences_b.p", "rb") as f:
     sents_b = pickle.load(f)
 
-# instead of cosine similarity lists (earlier imp):
 # make avg mfcc list, embeddings list, and an avgs
 # activations list for each layer, for the sentences
 # in A as well as in B. only keep the averaged versions in memory
@@ -152,7 +161,11 @@ embeddings_B = []
 # process spoken sentences in batches of 100 (which is how they are stored) 
 for b in range((len(sents_a)/100)+1):
     print b,
-    mfcc_a, mfcc_b = get_batch_mfccs(b)
+    # use this when using stored mfcc features
+    mfcc_a, mfcc_b = load_batch_mfccs(b) 
+    # uncomment next line when extracting mfccs from generated speech
+    #mfcc_a, mfcc_b = get_batch_mfccs(b)
+
     # add accelleration for f8k model
     if whichmodel == "flickr8k":
         mfcc_a = tts.add_accel(mfcc_a)
@@ -189,7 +202,7 @@ embedding_sims = cosine_similarities(embeddings_A, embeddings_B, transform)
 
 #### WORD MODEL
 # load wordmodel
-wordmodel = task.load("run-rhn-coco-word-4/model.r.e14.zip")
+wordmodel = task.load("../models/coco-text.zip")
 # tokenize sentences
 words_a = [tokenize(s) for s in sents_a]
 words_b = [tokenize(s) for s in sents_b]

@@ -28,6 +28,7 @@ The plot will be written to `better-length.pdf`.
 
 ### Figure 4
 
+In order to generate the figure:
 ```
 python2.7 utterance-length.py
 ```
@@ -38,25 +39,41 @@ The plot will be written to `sentlength.pdf`.
 
 ### Figure 5
 
+In order to generate the figure:
 ```
-python2.7 extract-features.py
-python2.7 predict-word-presence.py
+KERAS_BACKEND=theano python2.7 predict-word-presence.py
 ```
 The plot will be written to `predword.pdf`.
 
+Pre-extracted feature files for this experiment are included in `data.tgz`. If you need to re-generate them, run:
+
+```
+python2.7 extract-features.py
+```
+The features will be written to:
+- `../data/coco/words-coco.npy`
+- `../data/coco/mfcc-coco.npy`
+- `../data/flickr8k/words-flickr8k.npy`
+- `../data/flickr8k/mfcc-flickr8k.npy`
 
 ## Section 4.5 Sentence similarity
 
-- synthesize-words.py
-       generates synthesized version of all words in a dataset.
-- synthesize-sentences.py
-       generates synthesized version of sentences in a pickled list of sentences as strings
-
 ### Figure 6
+
+In order to create the figure, run:
+
 ```
-python sentence-similarity.py
+python2.7 sentence-similarity.py
 Rscript bootstrap-and-plot-correlations.R
 ```
+Figure will be save in `xxx.pdf`
+
+Pre-extracted feature files for this experiment are included in `data.tgz`. If you need to re-generate them, run:
+
+```
+python2.7 zzz.py
+```
+
 ## Section 4.6 Homonym disambiguation
 
 ### Figure 7

@@ -55,10 +55,6 @@ The features will be written to:
 - `../data/coco/mfcc-coco.npy`
 - `../data/flickr8k/words-flickr8k.npy`
 - `../data/flickr8k/mfcc-flickr8k.npy`
-```
-
-
-
 
 ## Section 4.5 Sentence similarity
 

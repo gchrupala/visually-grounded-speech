@@ -2,7 +2,7 @@ from funktional.layer import Layer, Dense, StackedGRU, StackedGRUH0, Convolution
                              Embedding, OneHot,  clipped_rectify, sigmoid, steeper_sigmoid, tanh, CosineDistance,\
                              last, softmax3d, params, Attention
 from funktional.rhn import StackedRHN0
-import funktional.context as context        
+import funktional.context as context
 from funktional.layer import params
 import imaginet.task as task
 from funktional.util import autoassign
@@ -17,20 +17,21 @@ import json
 import cPickle as pickle
 from theano.tensor.shared_randomstreams import RandomStreams
 from imaginet.simple_data import vector_padder
+import itertools
 
 class Encoder(Layer):
 
-    def __init__(self, size_vocab, size, depth=1, recur_depth=1, 
+    def __init__(self, size_vocab, size, depth=1, recur_depth=1,
                  filter_length=6, filter_size=64, stride=2, drop_i=0.75 , drop_s=0.25, residual=False, seed=1):
         autoassign(locals())
         self.Conv = Convolution1D(self.size_vocab, self.filter_length, self.filter_size, stride=self.stride)
 
         self.RHN = StackedRHN0(self.filter_size, self.size, depth=self.depth, recur_depth=self.recur_depth,
                                drop_i=self.drop_i, drop_s=self.drop_s, residual=self.residual, seed=self.seed)
-        
+
     def params(self):
         return params(self.Conv, self.RHN)
-    
+
     def __call__(self, input):
         return self.RHN(self.Conv(input))
 
@@ -42,8 +43,8 @@ class Visual(task.Task):
         self.updater = util.Adam(max_norm=config['max_norm'], lr=config['lr'])
         self.Encode = Encoder(config['size_vocab'],
                               config['size'],
-                              filter_length=config.get('filter_length', 6), 
-                              filter_size=config.get('filter_size', 1024), 
+                              filter_length=config.get('filter_length', 6),
+                              filter_size=config.get('filter_size', 1024),
                               stride=config.get('stride', 3),
                               depth=config.get('depth', 1),
                               recur_depth=config.get('recur_depth',1),
@@ -59,13 +60,13 @@ class Visual(task.Task):
     def compile(self):
         task.Task.compile(self)
         self.encode_images = self._make_encode_images()
-        
+
     def params(self):
         return params(self.Encode, self.Attn, self.ImgEncoder)
-    
+
     def __call__(self, input):
         return util.l2norm(self.Attn(self.Encode(input)))
-    
+
     # FIXME HACK ALERT
     def cost(self, i, s_encoded):
         if self.config['contrastive']:
@@ -95,18 +96,22 @@ class Visual(task.Task):
 
 def encode_sentences(model, audios, batch_size=128):
     """Project audios to the joint space using model.
-    
+
     For each audio returns a vector.
     """
     return numpy.vstack([ model.task.predict(vector_padder(batch))
                             for batch in util.grouper(audios, batch_size) ])
 
-def layer_states(model, audios, batch_size=128):
+def iter_layer_states(model, audios, batch_size=128):
     """Pass audios through the model and for each audio return the state of each timestep and each layer."""
-                             
+
     lens = (numpy.array(map(len, audios)) + model.config['filter_length']) // model.config['stride']
-    rs = [ r for batch in util.grouper(audios, batch_size) for r in model.task.pile(vector_padder(batch)) ]
-    return [ r[-l:,:,:] for (r,l) in zip(rs, lens) ]                                    
+    rs = (r for batch in util.grouper(audios, batch_size) for r in model.task.pile(vector_padder(batch)))
+    for (r,l) in itertools.izip(rs, lens):
+         yield r[-l:,:,:]
+
+def layer_states(model, audios, batch_size=128):
+    return list(iter_layer_states(model, audios, batch_size=128))
 
 def encode_images(model, imgs, batch_size=128):
     """Project imgs to the joint space using model.

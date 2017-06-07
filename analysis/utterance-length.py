@@ -10,7 +10,7 @@ remove_stopwords = False
 item_count = -1
 if len(sys.argv) > 1:
     item_count = int(sys.argv[1])
-    
+
 
 
 def applyLinearRegression(train_x, train_y, test_x, test_y):
@@ -45,7 +45,7 @@ def maxall(scores):
     for x in scores:
         mmax = max(mmax, max(scores[x]))
     return mmax
-                                                
+
 
 
 rsquare = {}
@@ -64,8 +64,8 @@ for dataset in ['flickr8k','coco']:
     validate = list(prov.iterSentences(split='val'))
     data = [ numpy.asarray(sent['audio'], dtype='float32') for sent in validate ]
     val_embeddings = audiovis.encode_sentences(model, data)
-    audiovis = reload(audiovis)
-    val_states = audiovis.layer_states(model, data)
+    val_states = [ datum.mean(axis=0) for datum in audiovis.iter_layer_states(model, data) ]
+    del data
 
     if item_count > -1:
         validate = validate[:min(item_count,len(validate))]
@@ -81,30 +81,32 @@ for dataset in ['flickr8k','coco']:
         y = [[len(removeStopWords(item['tokens']))] for item in validate]
     else:
         y = [[len(item['tokens'])] for item in validate]
-                    
+
     print("Words based on time steps")
     x = [[len(item['audio'])] for item in validate]
     baseline[dataset] = applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:])
-    
+
     rsquare[dataset] = []
-    
+
     print("Average input vectors")
     x = [numpy.average(item['audio'],axis=0) for item in validate]
     rsquare[dataset].append(applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:]))
-    
+
     print("Normalized average activation units")
-    layers = val_states[0].shape[1]
+    layers = val_states[0].shape[0]
     for l in range(layers):
-        x = [item[:,l,:].mean(axis=0) for item in val_states]
+        x = [item[l,:] for item in val_states]
         xnorm = [v/numpy.linalg.norm(v) for v in x]
         rsquare[dataset].append(applyLinearRegression(xnorm[0:sp], y[0:sp], xnorm[sp:], y[sp:]))
-        
+
     print("Words based on embeddings")
     x = val_embeddings
     rsquare[dataset].append(applyLinearRegression(x[0:sp], y[0:sp], x[sp:], y[sp:]))
 
 
 #----plotting
+import matplotlib
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 
 clen = len(rsquare['coco'])
@@ -133,41 +135,6 @@ plt.plot(xaxis[0:2],rsquare['flickr8k'][0:2],'r--')
 flickr, = plt.plot(xaxis[1:flen-1],rsquare['flickr8k'][1:flen-1],'r-', label="Flickr8k")
 plt.plot(xaxis[flen-2:flen],rsquare['flickr8k'][flen-2:],'r--')
 plt.plot([flen-1], rsquare['flickr8k'][-1], 'ro')
-
-plt.legend([coco,flickr], ["COCO","Flickr8k"], loc=4)
-plt.savefig('sentlength.pdf')
-
-
-
-
-
-
-
-
-from matplotlib import pyplot as plt
-
-clen = len(acc['coco'])
-flen = len(acc['flickr8k'])
-
-xaxis = [i for i in range(clen)]
-
-plt.axis([-1,clen,minall(acc)-0.05, maxall(acc)+0.05])
-plt.text(clen-1.5, acc['coco'][-1]-0.05, 'embeddings',color='blue')
-plt.text(flen-1.5, acc['flickr8k'][-1]-0.05, 'embeddings', color='red')
-plt.xlabel("Network layers")
-plt.ylabel(r"Sentence length prediction ($R^2$)")
-
-#plt.plot(xaxis,[baseline['coco']]*len(xaxis), 'b.')
-
-plt.plot(xaxis[0:2],acc['coco'][0:2],'b--')
-coco, = plt.plot(xaxis[1:clen-1],acc['coco'][1:clen-1],'b-', label="COCO")
-plt.plot(xaxis[clen-2:],acc['coco'][clen-2:],'b--')
-plt.plot([clen-1], acc['coco'][-1], 'bo')
-
-plt.plot(xaxis[0:2],acc['flickr8k'][0:2],'r--')
-flickr, = plt.plot(xaxis[1:flen-1],acc['flickr8k'][1:flen-1],'r-', label="Flickr8k")
-plt.plot(xaxis[flen-2:flen],acc['flickr8k'][flen-2:],'r--')
-plt.plot([flen-1], acc['flickr8k'][-1], 'ro')
 
 plt.legend([coco,flickr], ["COCO","Flickr8k"], loc=4)
 plt.savefig('sentlength.pdf')

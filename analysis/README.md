@@ -69,13 +69,11 @@ Rscript bootstrap-and-plot-correlations.R
 Sentence similarity data will be stored in `z_score_coco_sick.csv`. 
 Figure will be saved as `sentence_similarity.png`
 
-Pre-extracted feature files for this experiment are included in `data.tgz`. If you need to re-generate them, first synthesize and store speech by running:
+Pre-extracted feature files for this experiment are included in `data.tgz`. If you need to re-generate them, run:
 
 ```
-python2.7 synthesize-sentences.py sentences_a
-python2.7 synthesize-sentences.py sentences_b
+python2.7 extract_sick_features.py
 ```
-and comment line 165 and uncomment 167 in sentence-similarity.py to extract the features.
 
 ## Section 4.6 Homonym disambiguation
 

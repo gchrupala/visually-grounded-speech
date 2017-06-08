@@ -53,15 +53,6 @@ def cosine_similarities(a, b, transform):
     cos = [cosine_similarity(a[i], b[i]) for i in range(len(a))]
     return cos
 
-def get_batch_mfccs(batch):
-    with open("speech/sentences_a_{}.pkl".format(batch), "rb") as f:
-        audio_a = pickle.load(f)
-    mfcc_a = [ tts.extract_mfcc(audio) for audio in audio_a ]
-    with open("speech/sentences_b_{}.pkl".format(batch), "rb") as f:
-        audio_b = pickle.load(f)
-    mfcc_b = [ tts.extract_mfcc(audio) for audio in audio_b ]
-    return mfcc_a, mfcc_b
-
 def load_batch_mfccs(batch):
     mfcc_a = numpy.load("../data/coco/sick/mfccs/a_{}.npy".format(batch))
     mfcc_b = numpy.load("../data/coco/sick/mfccs/b_{}.npy".format(batch))
@@ -158,13 +149,11 @@ if whichmodel == "coco":
 embeddings_A = []
 embeddings_B = []
 
-# process spoken sentences in batches of 100 (which is how they are stored) 
+# process spoken sentences in batches of 100 (which is how they are stored)
 for b in range((len(sents_a)/100)+1):
     print b,
     # use this when using stored mfcc features
-    mfcc_a, mfcc_b = load_batch_mfccs(b) 
-    # uncomment next line when extracting mfccs from generated speech
-    #mfcc_a, mfcc_b = get_batch_mfccs(b)
+    mfcc_a, mfcc_b = load_batch_mfccs(b)
 
     # add accelleration for f8k model
     if whichmodel == "flickr8k":
@@ -189,7 +178,7 @@ for b in range((len(sents_a)/100)+1):
         avg_l4_B.extend([item[:,4,:].mean(axis=0) for item in states_b])
 
 avg_sims = {}
-print "\ndata loaded and fed to model"       
+print "\ndata loaded and fed to model"
 #### calculate all the cosine similarities
 MFCC_sims = cosine_similarities(avg_mfcc_A, avg_mfcc_B, transform)
 avg_sims[0] = cosine_similarities(avg_l0_A, avg_l0_B, transform)
@@ -250,7 +239,7 @@ if whichmodel == "coco":
     layers = [0, 1, 2, 3, 4]
 elif whichmodel == "flickr8k":
     layers = [0, 1, 2, 3]
-            
+
 # compute & print correlations
 print "Z scored: " + str(transform)
 print "\n"

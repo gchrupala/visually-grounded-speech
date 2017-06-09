@@ -8,7 +8,7 @@ from scipy.spatial.distance import cosine
 from scipy.stats import spearmanr, pearsonr, zscore
 
 import imaginet.task as task
-import imaginet.tts as tts
+#import imaginet.tts as tts
 import imaginet.defn.audiovis_rhn as audiovis
 import imaginet.defn.visual2_rhn as vis2
 
@@ -156,9 +156,9 @@ for b in range((len(sents_a)/100)+1):
     mfcc_a, mfcc_b = load_batch_mfccs(b)
 
     # add accelleration for f8k model
-    if whichmodel == "flickr8k":
-        mfcc_a = tts.add_accel(mfcc_a)
-        mfcc_b = tts.add_accel(mfcc_b)
+    #if whichmodel == "flickr8k":
+    #    mfcc_a = tts.add_accel(mfcc_a)
+    #    mfcc_b = tts.add_accel(mfcc_b)
     avg_mfcc_A.extend([m.mean(axis=0) for m in mfcc_a])
     avg_mfcc_B.extend([m.mean(axis=0) for m in mfcc_b])
     embeddings_A.extend(audiovis.encode_sentences(model, mfcc_a))

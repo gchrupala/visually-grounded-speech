@@ -21,6 +21,7 @@ For the scripts in [analysis](analysis), you also need to install:
 
 - sklearn
 - pandas
+- matplotlib
 - keras
 
 

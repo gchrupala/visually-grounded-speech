@@ -41,7 +41,7 @@ The plot will be written to `sentlength.pdf`.
 
 In order to generate the figure:
 ```
-python2.7 predict-word-presence.py
+KERAS_BACKEND=theano python2.7 predict-word-presence.py
 ```
 The plot will be written to `predword.pdf`.
 

@@ -16,6 +16,15 @@ The files in `models.tgz` contain the pre-trained models used for the analyses i
 
 After unpacking these files you should have the directories `data` and `models`.
 
+
+For the scripts in [analysis](analysis), you also need to install:
+
+- sklearn
+- pandas
+- matplotlib
+- keras
+
+
 ## Usage
 
 ### Training models

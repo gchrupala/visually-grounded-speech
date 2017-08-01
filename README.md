@@ -11,10 +11,19 @@ Second, install the code in the current repo:
 
     python setup.py develop
 
-You also need to download and unpack the files `data.tgz` and `models.tgz` from https://doi.org/10.5281/zenodo.495455.
+You also need to download and unpack the files `data.tgz` and `models.tgz` from http://doi.org/10.5281/zenodo.804392.
 The files in `models.tgz` contain the pre-trained models used for the analyses in the paper.
 
 After unpacking these files you should have the directories `data` and `models`.
+
+
+For the scripts in [analysis](analysis), you also need to install:
+
+- sklearn
+- pandas
+- matplotlib
+- keras
+
 
 ## Usage
 

@@ -41,7 +41,7 @@ The plot will be written to `sentlength.pdf`.
 
 In order to generate the figure:
 ```
-python2.7 predict-word-presence.py
+KERAS_BACKEND=theano python2.7 predict-word-presence.py
 ```
 The plot will be written to `predword.pdf`.
 
@@ -50,11 +50,6 @@ Pre-extracted feature files for this experiment are included in `data.tgz`. If y
 ```
 python2.7 extract-features.py
 ```
-The features will be written to:
-- `../data/coco/words-coco.npy`
-- `../data/coco/mfcc-coco.npy`
-- `../data/flickr8k/words-flickr8k.npy`
-- `../data/flickr8k/mfcc-flickr8k.npy`
 
 ## Section 4.5 Sentence similarity
 
